@@ -1,0 +1,27 @@
+{
+  "name": "fn-list",
+  "version": "1.0.0",
+  "description": "A library for managing functions as a list of executable steps. 함수를 실행 가능한 단계별 리스트로 관리하기 위한 라이브러리.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/limjs245/fn-list.git"
+  },
+  "keywords": [
+    "function",
+    "list",
+    "step",
+    "pipeline",
+    "sequence",
+    "utility"
+  ],
+  "author": "limjs245",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/limjs245/fn-list/issues"
+  },
+  "homepage": "https://github.com/limjs245/fn-list#readme"
+}
