@@ -45,13 +45,13 @@ const f = fnList.param("x").pipe(
 ## 설치
 
 ```bash
-npm install fnlist
+npm install fn-list
 ```
 
 또는:
 
 ```bash
-pnpm add fnlist
+pnpm add fn-list
 ```
 
 ---
