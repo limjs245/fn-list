@@ -1,7 +1,8 @@
+// test/dsl.test.js
 import assert from "node:assert/strict";
 
-import { fnList } from "../lib/core.js";
 import {
+  fnList,
   _,
   let_,
   const_,
@@ -15,8 +16,10 @@ import {
   continue_,
   throw_,
   try_,
+  call_,
+  tap_,
   block_,
-} from "../lib/dsl.js";
+} from "../index.js";
 
 function test(name, fn) {
   try {
@@ -27,6 +30,10 @@ function test(name, fn) {
     throw error;
   }
 }
+
+/* =========================
+ * 정상 테스트 10개
+ * ========================= */
 
 test("1. return_ 기본 반환", () => {
   const f = fnList.param("x").pipe(
@@ -45,16 +52,17 @@ test("2. 여러 파라미터 반환", () => {
   assert.equal(f(10, 20), 30);
 });
 
-test("3. let_ 변수 선언 후 반환", () => {
+test("3. let_ 선언 후 set_ 대입", () => {
   const f = fnList.param("x").pipe(
     let_("y")(({ x }) => x * 2),
+    set_("y")(({ y }) => y + 1),
     return_(({ y }) => y)
   );
 
-  assert.equal(f(5), 10);
+  assert.equal(f(5), 11);
 });
 
-test("4. const_ 변수 선언 후 반환", () => {
+test("4. const_ 선언 후 값 사용", () => {
   const f = fnList.param().pipe(
     const_("x")(100),
     return_(({ x }) => x)
@@ -63,17 +71,7 @@ test("4. const_ 변수 선언 후 반환", () => {
   assert.equal(f(), 100);
 });
 
-test("5. set_ 변수 대입", () => {
-  const f = fnList.param().pipe(
-    let_("x")(1),
-    set_("x")(({ x }) => x + 9),
-    return_(({ x }) => x)
-  );
-
-  assert.equal(f(), 10);
-});
-
-test("6. if_ / elseIf_ / else_ 분기", () => {
+test("5. if_ / elseIf_ / else_ 분기", () => {
   const f = fnList.param("x").pipe(
     if_(({ x }) => x > 10)(
       return_("big")
@@ -89,7 +87,7 @@ test("6. if_ / elseIf_ / else_ 분기", () => {
   assert.equal(f(3), "small");
 });
 
-test("7. switch_ fallthrough + break_", () => {
+test("6. switch_ fallthrough와 break_", () => {
   const f = fnList.param("x").pipe(
     let_("out")(""),
     switch_(({ x }) => x)
@@ -111,7 +109,7 @@ test("7. switch_ fallthrough + break_", () => {
   assert.equal(f(3), "D");
 });
 
-test("8. for_ 합계 계산", () => {
+test("7. for_ 합계 계산", () => {
   const f = fnList.param("n").pipe(
     let_("sum")(0),
     for_(
@@ -127,7 +125,7 @@ test("8. for_ 합계 계산", () => {
   assert.equal(f(5), 15);
 });
 
-test("9. while_ 반복", () => {
+test("8. while_ 반복", () => {
   const f = fnList.param("n").pipe(
     let_("i")(0),
     while_(({ i, n }) => i < n)(
@@ -139,7 +137,7 @@ test("9. while_ 반복", () => {
   assert.equal(f(5), 5);
 });
 
-test("10. try_ / catch_ / finally_ 동작", () => {
+test("9. try_ / catch_ / finally_", () => {
   const f = fnList.param().pipe(
     let_("done")(false),
     try_(
@@ -154,6 +152,43 @@ test("10. try_ / catch_ / finally_ 동작", () => {
 
   assert.equal(f(), "boom");
 });
+
+test("10. block_, trace, runner, inspect", () => {
+  const b = fnList.block(
+    let_("y")(({ x }) => x + 1),
+    set_("x")(({ x, y }) => x + y)
+  );
+
+  const f = fnList.param("x").pipe(
+    b,
+    return_(({ x }) => x)
+  );
+
+  assert.equal(f(10), 21);
+
+  const trace = f.trace(10);
+  assert.equal(trace.result, 21);
+  assert.equal(trace.steps.length, 2);
+
+  const runner = f.runner(10);
+  const first = runner.next();
+  assert.equal(first.done, false);
+  assert.deepEqual(first.after, { x: 21, y: 11 });
+
+  const second = runner.next();
+  assert.equal(second.done, true);
+  assert.equal(second.value, 21);
+
+  const info = f.inspect();
+  assert.equal(info.type, "fnList");
+  assert.equal(info.size, 2);
+  assert.equal(info.steps[0].meta.type, "block");
+});
+
+
+/* =========================
+ * 오류 테스트 10개
+ * ========================= */
 
 test("오류 1. param은 문자열만 허용", () => {
   assert.throws(
